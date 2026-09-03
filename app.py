@@ -1,6 +1,9 @@
 import streamlit as st
 from textblob import TextBlob
 from googletrans import Translator
+from streamlit_lottie import st_lottie
+import json
+import os
 
 # ---------------------------------------------------------
 # CONFIGURACIÓN DE PÁGINA
@@ -12,7 +15,20 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# ESTILOS CSS PERSONALIZADOS (Diseño Emocional + UX Infantil)
+# FUNCIÓN PARA CARGAR ANIMACIONES LOTTIE (JSON LOCAL)
+# ---------------------------------------------------------
+def load_lottie_file(filepath: str):
+    if os.path.exists(filepath):
+        with open(filepath, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return None
+
+# Cargar las animaciones de tu carpeta
+lottie_happy = load_lottie_file("Bouncing Fruits.json")
+lottie_sad = load_lottie_file("sad emotion.json")
+
+# ---------------------------------------------------------
+# ESTILOS CSS PERSONALIZADOS (Alineado a la Izquierda)
 # ---------------------------------------------------------
 st.markdown("""
     <style>
@@ -22,30 +38,20 @@ st.markdown("""
         font-family: 'Comic Sans MS', 'Chalkboard SE', 'Segoe UI', sans-serif;
     }
     
-    /* Header principal */
+    /* Todo alineado estrictamente a la izquierda */
     .main-title {
         color: #FF6B6B;
-        text-align: center;
-        font-size: 2.8rem;
+        text-align: left;
+        font-size: 2.5rem;
         font-weight: 800;
-        margin-bottom: 5px;
+        margin-bottom: 0px;
     }
     
     .sub-title {
         color: #4A5568;
-        text-align: center;
-        font-size: 1.2rem;
-        margin-bottom: 25px;
-    }
-
-    /* Tarjetas de contenido */
-    .css-card {
-        background-color: #FFFFFF;
-        border-radius: 20px;
-        padding: 25px;
-        box-shadow: 0px 10px 25px rgba(0,0,0,0.05);
+        text-align: left;
+        font-size: 1.1rem;
         margin-bottom: 20px;
-        border: 2px solid #EDF2F7;
     }
 
     /* Modificación de Inputs y Botones */
@@ -61,22 +67,16 @@ st.markdown("""
         box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2) !important;
     }
 
-    /* Resultados */
-    .result-box {
-        border-radius: 20px;
-        padding: 20px;
-        text-align: center;
-        margin-top: 20px;
-        color: white;
-        font-weight: bold;
-    }
-
     /* Sidebar con estilo suave */
     [data-testid="stSidebar"] {
         background-color: #FFF9EC;
         border-right: 2px solid #FFE66D;
     }
 
+    /* Asegurar alineación izquierda en etiquetas */
+    .stMarkdown p, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
+        text-align: left !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -90,49 +90,57 @@ translator = Translator()
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("### 🎈 ¿Cómo funciona?")
-    st.image("https://cdn-icons-png.flaticon.com/512/4152/4152757.png", width=120)
     
+    # Animación pequeña en la barra lateral si existe la fruta
+    if lottie_happy:
+        st_lottie(lottie_happy, height=120, key="side_fruit")
+        
     st.markdown("""
-    **¿Qué es la Polaridad?**  
-    Es si la frase está **Feliz** (Positiva), **Triste/Enojada** (Negativa) o **Normal** (Neutral).
+    **Polaridad:**  
+    Muestra si la frase expresa algo **Feliz** (Positiva), **Triste/Enojada** (Negativa) o **Normal** (Neutral).
 
     ---
-    **¿Qué es la Subjetividad?**  
-    Nos dice si es una **opinión personal** (Subjetivo) o un **hecho real** (Objetivo).
+    **Subjetividad:**  
+    Mide si es una **opinión personal** o un **hecho real**.
     """)
 
 # ---------------------------------------------------------
-# ÁREA PRINCIPAL
+# ÁREA PRINCIPAL (Encabezado + Animación en Columnas)
 # ---------------------------------------------------------
-st.markdown('<h1 class="main-title">✨ Detector de Emociones ✨</h1>', unsafe_allow_html=True)
-st.markdown('<p class="sub-title">¡Descubre la emoción que se esconde detrás de tus palabras!</p>', unsafe_allow_html=True)
+col_header, col_anim = st.columns([2, 1])
 
-# Banner interactivo superior
-st.image("https://img.freepik.com/vector-gratis/ilustracion-concepto-emociones-dibujados-mano_23-2149151525.jpg", use_container_width=True)
+with col_header:
+    st.markdown('<h1 class="main-title">✨ Detector de Emociones</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-title">Descubre la emoción que se esconde detrás de tus palabras.</p>', unsafe_allow_html=True)
 
-st.write("")
+with col_anim:
+    # Muestra animación principal de bienvenida alineada a la derecha del título
+    if lottie_happy:
+        st_lottie(lottie_happy, height=140, key="hero_anim")
 
-# Contenedor interactivo principal
-with st.container():
-    st.markdown("##### 📝 Escribe una frase o selecciona una de prueba:")
-    
-    # Atajo visual: Botones de prueba para reducir la carga de escribir
-    col_btn1, col_btn2, col_btn3 = st.columns(3)
-    sample_text = ""
-    if col_btn1.button("🌈 ¡Hoy es un gran día!"):
-        sample_text = "¡Hoy es un gran día y me siento súper feliz!"
-    if col_btn2.button("🍕 La pizza está rica"):
-        sample_text = "La pizza de queso es muy sabrosa."
-    if col_btn3.button("🌧️ Odio cuando llueve"):
-        sample_text = "No me gusta cuando llueve porque no puedo jugar."
+# ---------------------------------------------------------
+# SECCIÓN DE ENTRADA Y BOTONES DE PRUEBA
+# ---------------------------------------------------------
+st.markdown("##### 📝 Escribe una frase o selecciona una de prueba:")
 
-    # Campo de texto principal
-    text_input = st.text_input("", value=sample_text, placeholder="Escribe aquí tu frase... Ej: ¡Me encanta jugar en el parque!")
+col_btn1, col_btn2, col_btn3 = st.columns(3)
+sample_text = ""
+if col_btn1.button("🌈 ¡Hoy es un gran día!"):
+    sample_text = "¡Hoy es un gran día y me siento súper feliz!"
+if col_btn2.button("🍕 La pizza está rica"):
+    sample_text = "La pizza de queso es muy sabrosa."
+if col_btn3.button("🌧️ Odio cuando llueve"):
+    sample_text = "No me gusta cuando llueve porque no puedo jugar."
 
+# Campo de texto principal
+text_input = st.text_input("", value=sample_text, placeholder="Escribe aquí tu frase...")
+
+# ---------------------------------------------------------
+# RESULTADO Y PROCESAMIENTO
+# ---------------------------------------------------------
 if text_input:
     with st.spinner('Analizando los sentimientos... 🔍'):
         try:
-            # Traducción e inferencia de sentimiento
             translation = translator.translate(text_input, src="es", dest="en")
             trans_text = translation.text
             blob = TextBlob(trans_text)
@@ -143,36 +151,45 @@ if text_input:
             st.write("---")
             st.markdown("### 🎯 Resultado del Análisis")
 
-            # Determinación de estado emocional
+            # Determinación del estado emocional y selección de animación Lottie
             if polarity > 0.1:
-                emotion_label = "¡Sentimiento POSITIVO! 😊"
-                bg_color = "#2ECC71"  # Verde amigable
+                emotion_label = "Sentimiento POSITIVO 😊"
+                bg_color = "#2ECC71"
                 message = "¡Esta frase transmite mucha alegría y buena energía!"
+                selected_lottie = lottie_happy
             elif polarity < -0.1:
                 emotion_label = "Sentimiento NEGATIVO 😔"
-                bg_color = "#FF6B6B"  # Coral / Rojo suave
+                bg_color = "#FF6B6B"
                 message = "Esta frase parece expresar algo triste, enojado o molesto."
+                selected_lottie = lottie_sad
             else:
                 emotion_label = "Sentimiento NEUTRAL 😐"
-                bg_color = "#F1C40F"  # Amarillo
+                bg_color = "#F1C40F"
                 message = "Esta frase es informativa o no expresa una emoción clara."
+                selected_lottie = lottie_happy
 
-            # Visualización de la emoción principal
-            st.markdown(f"""
-                <div style="background-color: {bg_color}; border-radius: 20px; padding: 20px; text-align: center; color: white;">
-                    <h2 style="margin: 0; color: white;">{emotion_label}</h2>
-                    <p style="font-size: 1.1rem; margin-top: 5px;">{message}</p>
-                </div>
-            """, unsafe_allow_html=True)
+            # Tarjeta de resultado con animación Lottie integrada
+            col_res_text, col_res_lottie = st.columns([3, 1])
+
+            with col_res_text:
+                st.markdown(f"""
+                    <div style="background-color: {bg_color}; border-radius: 20px; padding: 20px; text-align: left; color: white;">
+                        <h2 style="margin: 0; color: white; text-align: left;">{emotion_label}</h2>
+                        <p style="font-size: 1.05rem; margin-top: 5px; color: white; text-align: left;">{message}</p>
+                    </div>
+                """, unsafe_allow_html=True)
+
+            with col_res_lottie:
+                if selected_lottie:
+                    st_lottie(selected_lottie, height=110, key="result_anim")
 
             st.write("")
             
-            # Medidores visuales de apoyo (Reducción de carga cognitiva)
+            # Barras de progreso alineadas a la izquierda
             col_m1, col_m2 = st.columns(2)
             
             with col_m1:
-                st.markdown("**Nivel de Alegría/Ánimo**")
-                # Escalado simple para barra (de -1..1 a 0..100)
+                st.markdown("**Nivel de Alegría / Ánimo**")
                 norm_polarity = int(((polarity + 1) / 2) * 100)
                 st.progress(norm_polarity)
                 st.caption(f"Valor: {polarity} (Rango de -1 a 1)")
@@ -184,4 +201,4 @@ if text_input:
                 st.caption(f"Subjetividad: {norm_subj}%")
 
         except Exception as e:
-            st.error("¡Ups! Ocurrió un pequeño problema al traducir la frase. Inténtalo de nuevo.")
+            st.error("Ocurrió un error al analizar la frase. Inténtalo de nuevo.")
